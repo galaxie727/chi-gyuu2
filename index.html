@@ -605,6 +605,12 @@ function rankFromScore(p){
   if(p >= 88) return "a";
   return "b";
 }
+function scoreToKey(score){
+  if(score === 100) return "s100";
+  if(score >= 95)  return "s95";
+  if(score >= 90)  return "s90";
+  return "s80"; // 80〜89
+}
 
 /* DOM */
 const counterEl   = document.getElementById("counter");
@@ -1171,13 +1177,8 @@ function endResult(){
   const g = getSelectedGirl(); // RESULTは選択中固定
 
   const score = rollScore();
-  const rank = rankFromScore(score);
-
-  let img = g.top;
-  if(rank==="gifted") img = (g.score.s && g.score.s.length) ? pick(g.score.s) : g.top;
-  else if(rank==="s") img = (g.score.s && g.score.s.length) ? pick(g.score.s) : g.top;
-  else if(rank==="a") img = (g.score.a && g.score.a.length) ? pick(g.score.a) : g.top;
-  else img = (g.score.b && g.score.b.length) ? pick(g.score.b) : g.top;
+  const key = scoreToKey(score);
+let img = (g.score && g.score[key]) ? g.score[key] : g.top;
 
   gameBg.style.backgroundImage = `url("${img}")`;
 
