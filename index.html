@@ -490,9 +490,10 @@ function makeGirl(prefix, key, name, locked=false, chiOverText="……"){
     chiGameover: `${prefix}_chi_gameover_01.png`,
     chiOverText,
     score: {
-      s: Array.from({length:3}, (_,i)=> `${prefix}_score_s_${String(i+1).padStart(2,"0")}.png`),
-      a: Array.from({length:3}, (_,i)=> `${prefix}_score_a_${String(i+1).padStart(2,"0")}.png`),
-      b: Array.from({length:3}, (_,i)=> `${prefix}_score_b_${String(i+1).padStart(2,"0")}.png`)
+      s80:  `${prefix}_score_80.png`,
+      s90:  `${prefix}_score_90.png`,
+      s95:  `${prefix}_score_95.png`,
+      s100: `${prefix}_score_100.png`
     }
   };
 }
