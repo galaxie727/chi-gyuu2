@@ -734,11 +734,13 @@ let allStarBag = [];
 let allStarLastKey = "";
 
 function getAllStarKeysAvailable(){
-  const unlocked = getUnlockedGirls(); // ["A","B","C"] etc
-  return unlocked.filter(k=>{
+  const unlocked = getUnlockedGirls();
+  const keys = unlocked.filter(k=>{
     const g = getGirlByKey(k);
-    return g && !g.locked && Array.isArray(g.normal) && g.normal.length > 0; // normalが無い子は除外
+    return g && !g.locked && Array.isArray(g.normal) && g.normal.length > 0;
   });
+  // 0件なら選択中だけ返す（保険）
+  return keys.length ? keys : [getSavedGirl()];
 }
 function refillAllStarBag(){
   const keys = shuffle(getAllStarKeysAvailable());
