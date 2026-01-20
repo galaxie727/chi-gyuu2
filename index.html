@@ -179,7 +179,14 @@ header{
 #modeScreen .overlay{
   justify-content:flex-start;
   align-items:flex-start;
-  padding-top:220px; /* ←ここで下げる */
+
+  /* ここが重要：スクロール許可 */
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+
+  /* 下げ量は端末に合わせて自動寄りに */
+  padding-top:clamp(160px, 26vh, 260px);
+  padding-bottom:24px;
 }
 .modeBtns{
   display:flex;
