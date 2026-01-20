@@ -483,7 +483,8 @@ function randInt(min, max){ return Math.floor(Math.random()*(max-min+1))+min; }
 function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 /* girls */
 function makeGirl(prefix, key, name, locked=false, chiOverText="……"){
-  const normal = Array.from({length:15}, (_,i)=> `${prefix}_normal_${String(i+1).padStart(2,"0")}.png`);
+  const NORMAL_COUNT = 7; // ←7にしたい時ここだけ変える
+const normal = Array.from({length:NORMAL_COUNT}, (_,i)=> `${prefix}_normal_${String(i+1).padStart(2,"0")}.png`);
   return {
     key, name, locked,
     icon: `${prefix}_icon.png`,
@@ -517,8 +518,8 @@ const GIRLS = [
   makeGirl("girlA","A","Girl A", false, "……（チー娘Aは無言で去っていった）"),
   makeGirl("girlB","B","Girl B", false, "……（チー娘B：見なかったことにするね）"),
   makeGirl("girlC","C","Girl C", false, "……（チー娘C：次はちゃんとして？）"),
-  makeGirlLite("girlD","D","Girl D"),
-  makeGirlLite("girlE","E","Girl E"),
+  makeGirl("girlD","D","Girl D", false, "……（チー娘D：試運転中）"),
+makeGirl("girlE","E","Girl E", false, "……（チー娘E：試運転中）"),
   makeGirlLite("girlF","F","Girl F")
 ];
 function getGirlByKey(k){ return GIRLS.find(x=>x.key===k) || GIRLS[0]; }
@@ -1180,7 +1181,8 @@ function endResult(){
   const g = getSelectedGirl(); // RESULTは選択中固定
 
   const score = rollScore();
-  const key = scoreToKey(score);
+const rank = rankFromScore(score);
+const key = scoreToKey(score);
 let img = (g.score && g.score[key]) ? g.score[key] : g.top;
 
   gameBg.style.backgroundImage = `url("${img}")`;
