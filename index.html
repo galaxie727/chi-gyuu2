@@ -464,7 +464,10 @@ function setPreviewKey(k){ localStorage.setItem(GIRL_PREVIEW_KEY, k); }
 (function ensureUnlockedDefault(){
   try{
     const cur = localStorage.getItem(UNLOCK_KEY);
-    if(!cur) localStorage.setItem(UNLOCK_KEY, JSON.stringify(["A","B","C"]));
+    if(!cur) localStorage.setItem(
+      UNLOCK_KEY,
+      JSON.stringify(["A","B","C","D","E"])
+    );
   }catch(e){}
 })();
 function getUnlockedGirls(){
