@@ -720,6 +720,15 @@ const ALLSTAR_ENABLED_KEY = "allStarEnabled"; // "1"=ON, "0" or null=OFF
 let allStarUnlocked = true;  // 今はデバッグでtrue（課金判定に差し替え予定）
 let allStarEnabled = false;  // ユーザーのON/OFF
 
+/* unlocked girls: localStorage から取得（無ければA/B/C） */
+function getUnlockedGirls(){
+  try{
+    const a = JSON.parse(localStorage.getItem(UNLOCK_KEY) || "[]");
+    if(Array.isArray(a) && a.length) return a;
+  }catch(e){}
+  return ["A","B","C"];
+}
+  
 /* バッグ方式（連続抑制） */
 let allStarBag = [];
 let allStarLastKey = "";
