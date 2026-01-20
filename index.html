@@ -482,17 +482,17 @@ function setPreviewKey(k){ localStorage.setItem(GIRL_PREVIEW_KEY, k); }
 /* unlocked default */
 (function ensureUnlockedDefault(){
   try{
-    const cur = localStorage.getItem(UNLOCK_KEY);
-    if(!cur) localStorage.setItem(UNLOCK_KEY, JSON.stringify(["A","B","C"]));
-  }catch(e){}
-})();
-function getUnlockedGirls(){
-  try{
-    const a = JSON.parse(localStorage.getItem(UNLOCK_KEY) || "[]");
-    return Array.isArray(a) && a.length ? a : ["A","B","C"];
-  }catch(e){ return ["A","B","C"]; }
-}
+    const cur = JSON.parse(localStorage.getItem(UNLOCK_KEY) || "[]");
+    const base = Array.isArray(cur) ? cur : [];
+    const need = ["A","B","C","D","E"]; // ←今は試しでDEも入れる
 
+    // 既存 + 不足追加
+    const merged = Array.from(new Set([...base, ...need]));
+    localStorage.setItem(UNLOCK_KEY, JSON.stringify(merged));
+  }catch(e){
+    localStorage.setItem(UNLOCK_KEY, JSON.stringify(["A","B","C","D","E"]));
+  }
+})();
 /* utils */
 function shuffle(a){ return a.slice().sort(()=>Math.random()-0.5); }
 function randInt(min, max){ return Math.floor(Math.random()*(max-min+1))+min; }
