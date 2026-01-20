@@ -455,6 +455,14 @@ header{
 </div>
 
 <script>
+window.onerror = function (msg, src, line, col, err) {
+  alert(
+    "JS ERROR:\n" +
+    msg + "\n" +
+    "line: " + line + " col: " + col + "\n" +
+    (err && err.stack ? err.stack : "")
+  );
+};
 /* =========================
    v3.0203 (45 basic / paid 25 + allstar)
 ========================= */
