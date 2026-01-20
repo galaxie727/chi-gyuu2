@@ -371,7 +371,6 @@ header{
     <div class="panel">
       <h1 class="titleBig">ガチ！チー牛診断！！</h1>
       <button class="bigBtn" id="btnGoGirl">START</button>
-      <!-- ※45問目は〜 は消した -->
     </div>
   </div>
   <div id="versionTag">VERSION <span id="versionVal"></span></div>
@@ -399,15 +398,24 @@ header{
     <div class="panel">
       <h1 class="titleBig">モードを選んでね</h1>
       <div class="subLine" id="bestLine">チー娘 BEST：ステージ0</div>
-      <div class="modeBtns">
-  <button class="modeBtn" id="btnStartQuiz">チー牛診断</button>
-  <button class="modeBtn" id="btnStartChee">チー娘モード</button>
 
-  <button class="modeBtn" id="btnToggleAllStar">⭐ オールスター：OFF</button>
-  <div class="subLine" id="allStarNote" style="margin-top:-4px; opacity:.9;">
-    オールスターは課金で解放
-  </div>
-</div>
+      <div class="modeBtns">
+        <button class="modeBtn" id="btnStartQuiz">チー牛診断</button>
+        <button class="modeBtn" id="btnStartChee">チー娘モード</button>
+
+        <!-- 45/25 切替（25は課金ロック） -->
+        <button class="modeBtn" id="btnQuizLen">🧩 出題数：45問</button>
+        <div class="subLine" id="quizLenNote" style="margin-top:-4px; opacity:.9; display:none;">
+          25問は課金で解放
+        </div>
+
+        <!-- オールスター ON/OFF（課金ロック想定） -->
+        <button class="modeBtn" id="btnToggleAllStar">⭐ オールスター：OFF</button>
+        <div class="subLine" id="allStarNote" style="margin-top:-4px; opacity:.9;">
+          オールスターは課金で解放
+        </div>
+      </div>
+
       <button class="smallBack" id="btnModeBack">女の子選択に戻る</button>
     </div>
   </div>
@@ -441,9 +449,9 @@ header{
 
 <script>
 /* =========================
-   v3.0202 (single file fixed)
+   v3.0203 (45 basic / paid 25 + allstar)
 ========================= */
-const APP_VERSION = "v3.0202";
+const APP_VERSION = "v3.0203";
 document.getElementById("versionVal").textContent = APP_VERSION;
 
 /* keys */
@@ -451,6 +459,10 @@ const CHEE_RECORD_KEY = "cheeGirlBestStage";
 const GIRL_KEY = "selectedGirlKey";
 const GIRL_PREVIEW_KEY = "girlPreviewBgKey";
 const UNLOCK_KEY = "unlockedGirls"; // 例: ["A","B","C"]
+
+/* quiz length keys */
+const QUIZ_LEN_KEY = "quizLengthMode";        // "45" or "25"
+const QUIZ25_UNLOCK_KEY = "quiz25Unlocked";   // "1" = unlocked
 
 /* storage helpers */
 function getBestStage(){ return Number(localStorage.getItem(CHEE_RECORD_KEY)) || 0; }
@@ -464,10 +476,7 @@ function setPreviewKey(k){ localStorage.setItem(GIRL_PREVIEW_KEY, k); }
 (function ensureUnlockedDefault(){
   try{
     const cur = localStorage.getItem(UNLOCK_KEY);
-    if(!cur) localStorage.setItem(
-      UNLOCK_KEY,
-      JSON.stringify(["A","B","C","D","E"])
-    );
+    if(!cur) localStorage.setItem(UNLOCK_KEY, JSON.stringify(["A","B","C"]));
   }catch(e){}
 })();
 function getUnlockedGirls(){
@@ -481,10 +490,11 @@ function getUnlockedGirls(){
 function shuffle(a){ return a.slice().sort(()=>Math.random()-0.5); }
 function randInt(min, max){ return Math.floor(Math.random()*(max-min+1))+min; }
 function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
 /* girls */
 function makeGirl(prefix, key, name, locked=false, chiOverText="……"){
-  const NORMAL_COUNT = 7; // ←7にしたい時ここだけ変える
-const normal = Array.from({length:NORMAL_COUNT}, (_,i)=> `${prefix}_normal_${String(i+1).padStart(2,"0")}.png`);
+  const NORMAL_COUNT = 7; // ← normalは7枚
+  const normal = Array.from({length:NORMAL_COUNT}, (_,i)=> `${prefix}_normal_${String(i+1).padStart(2,"0")}.png`);
   return {
     key, name, locked,
     icon: `${prefix}_icon.png`,
@@ -501,7 +511,7 @@ const normal = Array.from({length:NORMAL_COUNT}, (_,i)=> `${prefix}_normal_${Str
     }
   };
 }
-/* DEFはicon/topのみなので lite */
+/* icon/topのみ */
 function makeGirlLite(prefix, key, name){
   return {
     key, name, locked:true,
@@ -511,22 +521,31 @@ function makeGirlLite(prefix, key, name){
     gameover: "",
     chiGameover: "",
     chiOverText: "（LOCKED）",
-    score: { s:[], a:[], b:[] }
+    score: {}
   };
 }
+
+/* ★ここ：D/Eの扱い
+   - 本当に icon/top だけなら makeGirlLite に戻すのが安全
+   - 「試し解除」したいなら makeGirl にしてOK（ただし画像不足だと404） */
 const GIRLS = [
   makeGirl("girlA","A","Girl A", false, "……（チー娘Aは無言で去っていった）"),
   makeGirl("girlB","B","Girl B", false, "……（チー娘B：見なかったことにするね）"),
   makeGirl("girlC","C","Girl C", false, "……（チー娘C：次はちゃんとして？）"),
+
+  // ▼ 試し解除（normal/score等がある前提）
   makeGirl("girlD","D","Girl D", false, "……（チー娘D：試運転中）"),
-makeGirl("girlE","E","Girl E", false, "……（チー娘E：試運転中）"),
+  makeGirl("girlE","E","Girl E", false, "……（チー娘E：試運転中）"),
+
+  // Fは未実装例
   makeGirlLite("girlF","F","Girl F")
 ];
+
 function getGirlByKey(k){ return GIRLS.find(x=>x.key===k) || GIRLS[0]; }
 let selectedGirlKey = getSavedGirl();
 function getSelectedGirl(){ return getGirlByKey(selectedGirlKey); }
 
-/* questions */
+/* questions (45) */
 const questions = [
   { text:"あなたはチー牛ですか？" },
   { text:"チーと言えば？" },
@@ -572,6 +591,22 @@ const questions = [
   { text:"『ギュウ』と答えると世界が少し平和になると思いますか？" },
   { text:"最後にひとこと。チーと言えば？" }
 ];
+
+/* ===== 45基本 / 課金で25解放 ===== */
+let quiz25Unlocked = true; // ←今はデバッグ。課金実装で localStorage/ストア判定に差し替え
+let quizLengthMode = "45"; // "45" or "25"
+let playQuestions = [];
+
+function makePlayQuestions(){
+  const all = questions.slice();
+  if(quizLengthMode !== "25") return all;
+
+  const first = all[0];
+  const last  = all[all.length - 1];
+  const midPool = all.slice(1, all.length - 1);
+  const mid = shuffle(midPool).slice(0, 23);
+  return [first, ...mid, last];
+}
 
 /* chee settings */
 const cheeLevelsNormal = [
@@ -644,6 +679,9 @@ const resultPct   = document.getElementById("resultPct");
 const btnToggleAllStar = document.getElementById("btnToggleAllStar");
 const allStarNote = document.getElementById("allStarNote");
 
+const btnQuizLen = document.getElementById("btnQuizLen");
+const quizLenNote = document.getElementById("quizLenNote");
+
 /* state */
 let gameMode = "quiz";   // "quiz" or "cheeOnly"
 let mode = "quiz";       // "quiz" or "chee" or "result"
@@ -665,7 +703,7 @@ let previewBgKey = getPreviewKey() || "";
 ===================== */
 const ALLSTAR_ENABLED_KEY = "allStarEnabled"; // "1"=ON, "0" or null=OFF
 let allStarUnlocked = true;  // 今はデバッグでtrue（課金判定に差し替え予定）
-let allStarEnabled = false;  // ←ユーザーのON/OFF
+let allStarEnabled = false;  // ユーザーのON/OFF
 
 /* バッグ方式（連続抑制） */
 let allStarBag = [];
@@ -675,10 +713,9 @@ function getAllStarKeysAvailable(){
   const unlocked = getUnlockedGirls(); // ["A","B","C"] etc
   return unlocked.filter(k=>{
     const g = getGirlByKey(k);
-    return g && !g.locked && Array.isArray(g.normal) && g.normal.length > 0; // D/E/Fは除外
+    return g && !g.locked && Array.isArray(g.normal) && g.normal.length > 0; // normalが無い子は除外
   });
 }
-
 function refillAllStarBag(){
   const keys = shuffle(getAllStarKeysAvailable());
   allStarBag = keys;
@@ -686,20 +723,16 @@ function refillAllStarBag(){
     [allStarBag[0], allStarBag[1]] = [allStarBag[1], allStarBag[0]];
   }
 }
-
 function nextAllStarKey(){
   if(!allStarBag.length) refillAllStarBag();
   const k = allStarBag.shift();
   allStarLastKey = k || "";
   return k || getSavedGirl();
 }
-
-/* ON/OFFトグル（課金ロック付き） */
 function setAllStarEnabled(next){
   allStarEnabled = !!next;
   try{ localStorage.setItem(ALLSTAR_ENABLED_KEY, allStarEnabled ? "1" : "0"); }catch(e){}
 }
-
 function toggleAllStarEnabled(){
   if(!allStarUnlocked){
     alert("オールスターモードは課金で解放されます");
@@ -707,24 +740,41 @@ function toggleAllStarEnabled(){
   }
   setAllStarEnabled(!allStarEnabled);
 }
-
-/* その「問/ステージ」で出るキャラ */
 function pickGirlForPlay(){
   if(!allStarEnabled) return getSelectedGirl();
   const k = nextAllStarKey();
   return getGirlByKey(k) || getSelectedGirl();
 }
-
 function refreshAllStarUI(){
   if(!btnToggleAllStar) return;
   btnToggleAllStar.textContent = `⭐ オールスター：${allStarEnabled ? "ON" : "OFF"}`;
-
-  // 課金状態に応じて注釈の出し分け（デバッグtrueでもOK）
   if(allStarNote){
     allStarNote.style.display = allStarUnlocked ? "none" : "block";
   }
 }
-  
+
+/* ===== 45/25 UI ===== */
+function setQuizLengthMode(next){
+  quizLengthMode = (next === "25") ? "25" : "45";
+  try{ localStorage.setItem(QUIZ_LEN_KEY, quizLengthMode); }catch(e){}
+}
+function refreshQuizLenUI(){
+  if(btnQuizLen) btnQuizLen.textContent = `🧩 出題数：${quizLengthMode}問`;
+  if(quizLenNote) quizLenNote.style.display = quiz25Unlocked ? "none" : "block";
+}
+function toggleQuizLen(){
+  if(quizLengthMode === "45"){
+    if(!quiz25Unlocked){
+      alert("25問モードは課金で解放されます");
+      return;
+    }
+    setQuizLengthMode("25");
+  }else{
+    setQuizLengthMode("45");
+  }
+  refreshQuizLenUI();
+}
+
 /* この「問」で出るキャラを固定（chee演出に引き継ぐ） */
 let playGirl = null;
 function setPlayGirl(g){ playGirl = g; }
@@ -881,11 +931,11 @@ function goGirlSelect(){
   else setGirlAndModeBgToSelectedTop();
   showOnly(girlScreen);
 }
-
 function goModeSelect(){
   refreshBestLine();
   setGirlAndModeBgToSelectedTop();
-  refreshAllStarUI();   // ←追加
+  refreshAllStarUI();
+  refreshQuizLenUI();
   showOnly(modeScreen);
 }
 
@@ -962,10 +1012,10 @@ function showQuestion(){
   applyGameQuestionBg();
 
   qEl.classList.add("hide");
-  qEl.textContent = questions[i].text;
+  qEl.textContent = playQuestions[i].text;
   clearSpeech();
 
-  counterEl.textContent = `${i+1}/${questions.length}`;
+  counterEl.textContent = `${i+1}/${playQuestions.length}`;
   setTimeout(()=> qEl.classList.remove("hide"), QUESTION_SHOW_DELAY);
 
   if(gameMode==="cheeOnly") buildChoicesChee10();
@@ -978,7 +1028,7 @@ function showQuestion(){
 function maybeChee(){
   if(ended) return;
 
-  if(i >= questions.length-1){ endResult(); return; }
+  if(i >= playQuestions.length-1){ endResult(); return; }
 
   if(!cheeCooldown && Math.random() < CHEE_RATE){
     cheeCooldown=true;
@@ -991,7 +1041,7 @@ function maybeChee(){
   }else{
     cheeCooldown=false;
     i++;
-    if(i < questions.length) showQuestion();
+    if(i < playQuestions.length) showQuestion();
     else endResult();
   }
 }
@@ -1005,7 +1055,7 @@ function startCheeBattle(level){
   gameScreen.classList.add("cut","announce","chee");
   if(level.stars >= 3) gameScreen.classList.add("stage3plus");
 
-  /* ★cheeでも同じ出演キャラ固定 */
+  /* cheeでも同じ出演キャラ固定 */
   const g = getPlayGirl();
   const list = (g.normal && g.normal.length) ? g.normal : getSelectedGirl().normal;
   gameBg.style.backgroundImage = `url("${pick(list)}")`;
@@ -1080,7 +1130,7 @@ function nextCheeOnlyAfterWin(){
     isNewRecordRun = true;
   }
 
-  // ★ オールスターONのときだけ女の子を更新
+  // オールスターONのときだけ女の子を更新
   if(allStarEnabled){
     setPlayGirl(pickGirlForPlay());
   }
@@ -1113,7 +1163,7 @@ function answer(t){
         }
 
         i++;
-        if(i < questions.length) showQuestion();
+        if(i < playQuestions.length) showQuestion();
         else endResult();
       }, GIRL_REPLY_DELAY_MS + CHEE_SUCCESS_HOLD_MS);
 
@@ -1123,7 +1173,7 @@ function answer(t){
     return;
   }
 
-  const isLast = (i === 44);
+  const isLast = (i === playQuestions.length - 1);
 
   setTimeout(()=>{
     if(t==="はい")        setTextWithHeart("笑");
@@ -1135,6 +1185,7 @@ function answer(t){
 
   setTimeout(()=>{
     if(isLast){
+      // 最後だけギュウが正解
       if(t !== "ギュウ"){ gameOver(false); return; }
       endResult(); return;
     }
@@ -1181,9 +1232,9 @@ function endResult(){
   const g = getSelectedGirl(); // RESULTは選択中固定
 
   const score = rollScore();
-const rank = rankFromScore(score);
-const key = scoreToKey(score);
-let img = (g.score && g.score[key]) ? g.score[key] : g.top;
+  const rank = rankFromScore(score);
+  const key = scoreToKey(score);
+  let img = (g.score && g.score[key]) ? g.score[key] : g.top;
 
   gameBg.style.backgroundImage = `url("${img}")`;
 
@@ -1258,10 +1309,11 @@ function restart(modeName){
     cheeStage = 1;
     lastGyuuIndex = -1;
     counterEl.textContent = `ステージ${cheeStage}`;
-    setPlayGirl(pickGirlForPlay()); // ONならオールスター、OFFなら選択中
+    setPlayGirl(pickGirlForPlay());
     startCheeBattle(cheeOnlyPickStage());
   }else{
     i=0;
+    playQuestions = makePlayQuestions(); // ★45/25の反映
     showQuestion();
   }
 }
@@ -1281,7 +1333,10 @@ if(btnToggleAllStar){
     refreshAllStarUI();
   };
 }
-  
+if(btnQuizLen){
+  btnQuizLen.onclick = ()=> toggleQuizLen();
+}
+
 function init(){
   selectedGirlKey = getSavedGirl();
   preloadTops();
@@ -1295,7 +1350,20 @@ function init(){
   try{
     allStarEnabled = localStorage.getItem(ALLSTAR_ENABLED_KEY) === "1";
   }catch(e){}
+
+  // quiz length を保存状態から復元
+  try{
+    const v = localStorage.getItem(QUIZ_LEN_KEY);
+    if(v==="25" || v==="45") quizLengthMode = v;
+  }catch(e){}
+
+  // quiz25 unlocked を保存状態から復元（課金実装したらここを本番判定にする）
+  try{
+    if(localStorage.getItem(QUIZ25_UNLOCK_KEY) === "1") quiz25Unlocked = true;
+  }catch(e){}
+
   refreshAllStarUI();
+  refreshQuizLenUI();
 }
 
 init();
